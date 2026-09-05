@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Interview Coach</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: #0f0f1a;
+        color: #fff;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 2rem;
+        margin-bottom: 10px;
+        background: linear-gradient(90deg, #6c63ff, #48cfad);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: #888;
+        margin-bottom: 30px;
+      }
+
+      .card {
+        background: #1a1a2e;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 20px;
+        border: 1px solid #2a2a4a;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #2a2a4a;
+        background: #0f0f1a;
+        color: #fff;
+        font-size: 1rem;
+        margin-bottom: 12px;
+      }
+
+      button {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: none;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .btn-primary {
+        background: linear-gradient(90deg, #6c63ff, #48cfad);
+        color: #fff;
+        font-weight: bold;
+      }
+
+      .btn-primary:hover {
+        opacity: 0.9;
+      }
+
+      .btn-mic {
+        background: #6c63ff;
+        color: #fff;
+        font-size: 1.5rem;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        margin: 20px auto;
+        display: block;
+      }
+
+      .btn-mic.recording {
+        background: #ff4757;
+        animation: pulse 1s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .question-box {
+        background: #16213e;
+        border-left: 4px solid #6c63ff;
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 1.1rem;
+        line-height: 1.6;
+      }
+
+      .evaluation-box {
+        background: #16213e;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 20px;
+      }
+
+      .score {
+        font-size: 2rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+
+      .score.high {
+        color: #48cfad;
+      }
+      .score.mid {
+        color: #ffd32a;
+      }
+      .score.low {
+        color: #ff4757;
+      }
+
+      .transcript-box {
+        background: #0f0f1a;
+        border: 1px solid #2a2a4a;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+        min-height: 60px;
+        font-style: italic;
+        color: #aaa;
+      }
+      textarea.transcript-box {
+        width: 100%;
+        background: #0f0f1a;
+        border: 1px solid #2a2a4a;
+        border-radius: 8px;
+        padding: 12px;
+        color: #aaa;
+        font-style: italic;
+        font-size: 1rem;
+        resize: vertical;
+      }
+      .progress {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+
+      .progress-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #2a2a4a;
+      }
+
+      .progress-dot.active {
+        background: #6c63ff;
+      }
+      .progress-dot.done {
+        background: #48cfad;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .report-card {
+        background: #16213e;
+        border-radius: 12px;
+        padding: 24px;
+      }
+
+      .report-score {
+        font-size: 3rem;
+        font-weight: bold;
+        text-align: center;
+        background: linear-gradient(90deg, #6c63ff, #48cfad);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .tag {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        margin: 4px;
+      }
+
+      .tag-green {
+        background: #1a3a2a;
+        color: #48cfad;
+      }
+      .tag-red {
+        background: #3a1a1a;
+        color: #ff4757;
+      }
+      .tag-blue {
+        background: #1a1a3a;
+        color: #6c63ff;
+      }
+
+      #status-msg {
+        text-align: center;
+        color: #888;
+        margin: 10px 0;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🤖 AI Interview Coach</h1>
+      <p class="subtitle">Practice technical interviews with AI feedback</p>
+
+      <!-- Setup Screen -->
+      <div id="setup-screen" class="card">
+        <h2 style="margin-bottom: 16px">Start Your Interview</h2>
+        <input type="text" id="candidate-name" placeholder="Your name" />
+        <select id="topic-select">
+          <option value="">Select a topic...</option>
+          <option value="python_basics">Python Basics</option>
+          <option value="python_advanced">Python Advanced</option>
+          <option value="system_design">System Design</option>
+          <option value="ml_ai">ML & AI</option>
+          <option value="data_structures">Data Structures</option>
+        </select>
+        <button class="btn-primary" onclick="startInterview()">
+          Start Interview 🚀
+        </button>
+      </div>
+
+      <!-- Interview Screen -->
+      <div id="interview-screen" class="hidden">
+        <div class="progress" id="progress-dots"></div>
+
+        <div class="card">
+          <h3 style="margin-bottom: 12px; color: #888">
+            Question <span id="q-number">1</span> of 5
+          </h3>
+          <div class="question-box" id="question-text">Loading...</div>
+          <button
+            onclick="window.speechSynthesis.cancel()"
+            style="
+              background: transparent;
+              border: 1px solid #2a2a4a;
+              color: #888;
+              width: auto;
+              padding: 6px 16px;
+              border-radius: 20px;
+              font-size: 0.85rem;
+              margin-bottom: 12px;
+              cursor: pointer;
+            ">
+            🔇 Stop Speaking
+          </button>
+
+          <p id="status-msg">Click the mic to record your answer</p>
+          <button class="btn-mic" id="mic-btn" onclick="toggleRecording()">
+            🎤
+          </button>
+
+          <textarea class="transcript-box" id="transcript" rows="4">
+Your answer will appear here...</textarea
+          >
+          <button
+            class="btn-primary hidden"
+            id="submit-btn"
+            onclick="submitAnswer()">
+            Submit Answer ✓
+          </button>
+        </div>
+
+        <!-- Evaluation -->
+        <div id="evaluation-box" class="card hidden">
+          <h3 style="margin-bottom: 12px">Feedback</h3>
+          <div class="score" id="score-display">-/10</div>
+          <p><strong>Feedback:</strong> <span id="feedback-text"></span></p>
+          <br />
+          <p>
+            <strong>Correct Answer:</strong> <span id="correct-answer"></span>
+          </p>
+          <br />
+          <p><strong>Tips:</strong> <span id="improvement-tips"></span></p>
+        </div>
+      </div>
+
+      <!-- Final Report -->
+      <div id="report-screen" class="hidden card">
+        <h2 style="text-align: center; margin-bottom: 20px">
+          Interview Complete! 🎉
+        </h2>
+        <div class="report-card">
+          <div class="report-score" id="final-score">-/10</div>
+          <p
+            style="text-align: center; margin: 10px 0"
+            id="performance-level"></p>
+
+          <h3 style="margin: 16px 0 8px">Strengths 💪</h3>
+          <div id="strengths"></div>
+
+          <h3 style="margin: 16px 0 8px">Areas to Improve 📈</h3>
+          <div id="weaknesses"></div>
+
+          <h3 style="margin: 16px 0 8px">Study Recommendations 📚</h3>
+          <div id="recommendations"></div>
+
+          <h3 style="margin: 16px 0 8px">Hiring Recommendation</h3>
+          <p id="hiring-rec" style="font-size: 1.2rem; font-weight: bold"></p>
+
+          <button
+            class="btn-primary"
+            style="margin-top: 20px"
+            onclick="resetInterview()">
+            Start New Interview 🔄
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    const API = "http://localhost:8000";
+    let sessionId = null;
+    let isRecording = false;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let currentQuestion = "";
+    let questionNumber = 1;
+
+    window.speechSynthesis.onvoiceschanged = function () {
+        console.log("Voices loaded:", window.speechSynthesis.getVoices().length);
+    };
+
+    function speakText(text) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.85;
+        utterance.pitch = 1.0;
+        utterance.volume = 1;
+        const voices = window.speechSynthesis.getVoices();
+        const preferredVoice = voices.find(v =>
+        v.name === 'Microsoft Guy Online (Natural) - English (United States)'
+        );
+        if (preferredVoice) {
+        utterance.voice = preferredVoice;
+        }
+        window.speechSynthesis.speak(utterance);
+    }
+
+    async function startInterview() {
+        const name = document.getElementById("candidate-name").value.trim();
+        const topic = document.getElementById("topic-select").value;
+
+        if (!name || !topic) {
+        alert("Please enter your name and select a topic!");
+        return;
+        }
+
+        try {
+        const response = await fetch(`${API}/start-interview`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ candidate_name: name, topic: topic }),
+        });
+
+        const data = await response.json();
+        sessionId = data.session_id;
+        currentQuestion = data.question;
+
+        document.getElementById("setup-screen").classList.add("hidden");
+        document.getElementById("interview-screen").classList.remove("hidden");
+        document.getElementById("question-text").textContent = data.question;
+        speakText(data.question);
+        updateProgress(1);
+        } catch (e) {
+        alert("Error connecting to API. Make sure the backend is running!");
+        }
+    }
+
+    async function toggleRecording() {
+        if (!isRecording) {
+        await startRecording();
+        } else {
+        stopRecording();
+        }
+    }
+
+    async function startRecording() {
+        try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+        mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+            await transcribeAudio(audioBlob);
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+        document.getElementById("mic-btn").classList.add("recording");
+        document.getElementById("mic-btn").textContent = "⏹";
+        document.getElementById("status-msg").textContent = "Recording... Click to stop";
+        } catch (e) {
+        alert("Microphone access denied!");
+        }
+    }
+
+    function stopRecording() {
+        mediaRecorder.stop();
+        isRecording = false;
+        document.getElementById("mic-btn").classList.remove("recording");
+        document.getElementById("mic-btn").textContent = "🎤";
+        document.getElementById("status-msg").textContent = "Transcribing...";
+    }
+
+    async function transcribeAudio(audioBlob) {
+        try {
+        const formData = new FormData();
+        formData.append("audio", audioBlob, "recording.wav");
+
+        const response = await fetch(`${API}/transcribe`, {
+            method: "POST",
+            body: formData,
+        });
+
+        const data = await response.json();
+        document.getElementById("transcript").value = data.text;
+        document.getElementById("submit-btn").classList.remove("hidden");
+        document.getElementById("status-msg").textContent = "Answer transcribed! Review and submit.";
+        } catch (e) {
+        document.getElementById("status-msg").textContent = "Transcription failed. Try again.";
+        }
+    }
+
+    async function submitAnswer() {
+        const answer = document.getElementById("transcript").value;
+
+        document.getElementById("submit-btn").classList.add("hidden");
+        document.getElementById("status-msg").textContent = "Evaluating your answer...";
+
+        try {
+        const response = await fetch(`${API}/submit-answer`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session_id: sessionId, answer: answer }),
+        });
+
+        const data = await response.json();
+        showEvaluation(data.evaluation);
+
+        if (data.status === "completed") {
+            setTimeout(() => showFinalReport(data.final_report), 8000);
+        } else {
+            setTimeout(() => {
+            currentQuestion = data.next_question;
+            questionNumber = data.question_number;
+            document.getElementById("question-text").textContent = data.next_question;
+            speakText(data.next_question);
+            document.getElementById("q-number").textContent = data.question_number;
+            document.getElementById("transcript").value = "Your answer will appear here...";
+            document.getElementById("evaluation-box").classList.add("hidden");
+            document.getElementById("status-msg").textContent = "Click the mic to record your answer";
+            updateProgress(data.question_number);
+            }, 8000);
+        }
+        } catch (e) {
+        document.getElementById("status-msg").textContent = "Error submitting answer. Try again.";
+        }
+    }
+
+    function showEvaluation(evaluation) {
+        const evalBox = document.getElementById("evaluation-box");
+        evalBox.classList.remove("hidden");
+
+        const score = evaluation.score;
+        const scoreEl = document.getElementById("score-display");
+        scoreEl.textContent = `${score}/10`;
+        scoreEl.className = "score " + (score >= 7 ? "high" : score >= 4 ? "mid" : "low");
+
+        document.getElementById("feedback-text").textContent = evaluation.feedback;
+        document.getElementById("correct-answer").textContent = evaluation.correct_answer;
+        document.getElementById("improvement-tips").textContent = evaluation.improvement_tips;
+    }
+
+    function showFinalReport(report) {
+        document.getElementById("interview-screen").classList.add("hidden");
+        document.getElementById("report-screen").classList.remove("hidden");
+
+        document.getElementById("final-score").textContent = `${report.overall_score}/10`;
+        document.getElementById("performance-level").textContent = report.performance_level;
+        document.getElementById("hiring-rec").textContent = report.hiring_recommendation;
+
+        document.getElementById("strengths").innerHTML = report.strengths
+        .map((s) => `<span class="tag tag-green">✓ ${s}</span>`).join("");
+
+        document.getElementById("weaknesses").innerHTML = report.weaknesses
+        .map((w) => `<span class="tag tag-red">✗ ${w}</span>`).join("");
+
+        document.getElementById("recommendations").innerHTML = report.study_recommendations
+        .map((r) => `<span class="tag tag-blue">📚 ${r}</span>`).join("");
+    }
+
+    function updateProgress(current) {
+        const dots = document.getElementById("progress-dots");
+        dots.innerHTML = "";
+        for (let i = 1; i <= 5; i++) {
+        const dot = document.createElement("div");
+        dot.className = "progress-dot" +
+            (i < current ? " done" : i === current ? " active" : "");
+        dots.appendChild(dot);
+        }
+    }
+
+    function resetInterview() {
+        sessionId = null;
+        questionNumber = 1;
+        document.getElementById("report-screen").classList.add("hidden");
+        document.getElementById("setup-screen").classList.remove("hidden");
+        document.getElementById("candidate-name").value = "";
+        document.getElementById("topic-select").value = "";
+    }
+    </script>
+  </body>
+</html>
