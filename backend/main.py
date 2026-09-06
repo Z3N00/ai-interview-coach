@@ -7,6 +7,9 @@ import os
 import tempfile
 from interviewer import get_first_question, get_next_question
 from evaluator import evaluate_answer, generate_final_report
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 
 load_dotenv()
 
@@ -36,6 +39,13 @@ class SubmitAnswer(BaseModel):
 @app.get("/")
 def home():
     return {"message": "AI Interview Coach API running!"}
+
+# Serve frontend static files
+app.mount("/static", StaticFiles(directory="../frontend"), name="static")
+
+@app.get("/app")
+def serve_frontend():
+    return FileResponse("../frontend/index.html")
 
 @app.get("/topics")
 def get_topics():
