@@ -1,6 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from groq import Groq
 from dotenv import load_dotenv
 import os
@@ -35,6 +35,27 @@ class StartInterview(BaseModel):
 class SubmitAnswer(BaseModel):
     session_id: str
     answer: str
+
+
+VALID_TOPICS = ["python_basics", "python_advanced", "system_design", "ml_ai", "data_structures"]
+
+class StartInterview(BaseModel):
+    candidate_name: str
+    topic: str
+
+    @field_validator('topic')
+    @classmethod
+    def topic_must_be_valid(cls, v):
+        if v not in VALID_TOPICS:
+            raise ValueError(f'Topic must be one of {VALID_TOPICS}')
+        return v
+
+    @field_validator('candidate_name')
+    @classmethod
+    def name_must_not_be_empty(cls, v):
+        if not v.strip():
+            raise ValueError('Candidate name cannot be empty')
+        return v
 
 @app.get("/")
 def home():
